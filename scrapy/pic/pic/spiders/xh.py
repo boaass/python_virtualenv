@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import scrapy
 
-from pic.items import PicItem
+from ..items import PicItem
 
 class XhSpider(scrapy.Spider):
     name = "xh"
@@ -21,9 +21,7 @@ class XhSpider(scrapy.Spider):
                     if url in XhSpider.url_set:
                         pass
                     else:
-
                         XhSpider.url_set.add(url)
-
                         yield self.make_requests_from_url(url)
                 else:
                     pass

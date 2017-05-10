@@ -13,9 +13,9 @@ class PicPipeline(object):
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:52.0) Gecko/20100101 Firefox/52.0'}
         req = urllib2.Request(url=item['addr'], headers=headers)
         res = urllib2.urlopen(req)
-        if not os.path.exists('pic'):
-            os.mkdir('pic')
-        file_name = os.path.join('pic/'+item['name']+'.jpg')
+        if not os.path.exists('image'):
+            os.mkdir('image')
+        file_name = os.path.join('image/'+item['name']+'.jpg')
         with open(file_name, 'wb') as fp:
             fp.write(res.read())
             print '+++++++++++++++++++++++++++++' + file_name

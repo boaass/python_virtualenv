@@ -1,11 +1,16 @@
 # -*- coding:utf-8 -*-
 import requests, termcolor
-import os, sys, time, platform, random
+import os, sys, codecs, time, platform, random
 import re, json, cookielib, lxml
 from getpass import getpass
 from bs4 import BeautifulSoup
 from ConfigParser import ConfigParser
 from enum import Enum
+#
+# if sys.stdout.encoding != 'UTF-8':
+#     sys.stdout = codecs.getwriter('utf-8')(sys.stdout, 'strict')
+# if sys.stderr.encoding != 'UTF-8':
+#     sys.stderr = codecs.getwriter('utf-8')(sys.stderr, 'strict')
 
 class Logging:
     def __init__(self):
@@ -40,17 +45,17 @@ class Logging:
 
 
 class AccountPasswordError(Exception):
-    def __init__(self, msg=u"账号密码错误"):
+    def __init__(self, msg="账号密码错误"):
         Logging.error(msg)
 
 
 class AccountTypeError(Exception):
-    def __init__(self, msg=u"账号类型错误"):
+    def __init__(self, msg="账号类型错误"):
         Logging.error(msg)
 
 
 class NetworkError(Exception):
-    def __init__(self, msg=u"网络错误"):
+    def __init__(self, msg="网络错误"):
         Logging.error(msg)
 
 session = requests.Session()
@@ -60,7 +65,7 @@ try:
     session.cookies.load(ignore_discard=True)
 except Exception as e:
     Logging.debug(e.message)
-    Logging.warning(u"cookies 加载失败 !!!")
+    Logging.warning("cookies 加载失败 !!!")
 
 header = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36",
@@ -87,7 +92,7 @@ def isLogin():
 def read_account_info_from_config_file(config_file="account_info.ini"):
     cp = ConfigParser()
     if os.path.exists(config_file) and os.path.isfile(config_file):
-        Logging.info(u"正在加载账号配置文件 ... ")
+        Logging.info("正在加载账号配置文件 ... ")
         cp.read(config_file)
         email = cp.get("info", ACCOUNT_TYPE.EMAIL_TYPE)
         phone_number = cp.get("info", ACCOUNT_TYPE.PHONE_TYPE)
@@ -99,7 +104,7 @@ def read_account_info_from_config_file(config_file="account_info.ini"):
                 return (phone_number, passward)
             else:
                 pass
-        Logging.info(u"本地无账号配置")
+        Logging.info("本地无账号配置")
         return (None, None)
 
 def save_account_info_to_config_file(form_data, config_file="account_info.ini"):
@@ -116,7 +121,7 @@ def save_account_info_to_config_file(form_data, config_file="account_info.ini"):
 # 获取_xsrf
 def search_xsrf():
     url = "https://www.zhihu.com"
-    response = session.get(url, headers=header)
+    response = session.get(url, headers=header, verify=False)
     Logging.debug("======_xsrf请求: %d======" % int(response.status_code))
     if int(response.status_code) != 200:
         raise NetworkError()
@@ -134,31 +139,31 @@ def parse_captcha():
     # 下载验证码
     t = str(int(time.time() * 1000))
     url = "https://www.zhihu.com/captcha.gif?r={time}&type=login".format(time=t)
-    response = session.get(url, headers=header)
+    response = session.get(url, headers=header, verify=False)
     Logging.debug("======验证码请求: %d======" % int(response.status_code))
     if response.status_code != 200:
-        raise NetworkError(u"验证码请求失败")
+        raise NetworkError("验证码请求失败")
 
     # 调用系统程序，打开验证码图片
-    image_name = "".join([u"verify", ".", response.headers["Content-Type"].split("/")[-1]])
+    image_name = "".join(["verify", ".", response.headers["Content-Type"].split("/")[-1]])
     open(image_name, "wb").write(response.content)
 
-    Logging.info(u"正在调用外部程序渲染验证码 ... ")
+    Logging.info("正在调用外部程序渲染验证码 ... ")
     if platform.system() == "Linux":
-        Logging.info(u"Command: xdg-open %s &" % image_name)
+        Logging.info("Command: xdg-open %s &" % image_name)
         os.system("xdg-open %s &" % image_name)
     elif platform.system() == "Darwin":
-        Logging.info(u"Command: open %s &" % image_name)
+        Logging.info("Command: open %s &" % image_name)
         os.system("open %s &" % image_name)
     elif platform.system() in ("SunOS", "FreeBSD", "Unix", "OpenBSD", "NetBSD"):
         os.system("open %s &" % image_name)
     elif platform.system() == "Windows":
         os.system("%s" % image_name)
     else:
-        Logging.info(u"无法获取当前操作系统，请自行打开验证码 %s 文件，并输入验证码。" % os.path.join(os.getcwd(), image_name))
+        Logging.info("无法获取当前操作系统，请自行打开验证码 %s 文件，并输入验证码。" % os.path.join(os.getcwd(), image_name))
 
     # 提示用户输入验证码并获取
-    sys.stdout.write(termcolor.colored(u"请输入验证码: ", "cyan"))
+    sys.stdout.write(termcolor.colored("请输入验证码: ", "cyan"))
     captcha_code = raw_input()
     return captcha_code
 
@@ -189,21 +194,21 @@ def upload_form(form):
     elif ACCOUNT_TYPE.EMAIL_TYPE in form:
         url = "https://www.zhihu.com/login/" + ACCOUNT_TYPE.EMAIL_TYPE
     else:
-        raise ValueError(u"账号类型错误")
+        raise ValueError("账号类型错误")
 
     response = session.post(url, data=form, headers=header)
     if int(response.status_code) != 200:
-        raise NetworkError(u"表单数据上传失败 !!!")
+        raise NetworkError("表单数据上传失败 !!!")
 
     if response.headers["content-type"].lower() != "application/json":
-        Logging.warning(u"无法解析服务器响应内容 !!!")
+        Logging.warning("无法解析服务器响应内容 !!!")
         return {
-            "error": dict(code=-2, msg=u"parse error")}
+            "error": dict(code=-2, msg="parse error")}
     else:
         try:
             r_json = json.loads(response.content)
         except Exception as e:
-            Logging.warning(u"json 解析失败 !!!")
+            Logging.warning("json 解析失败 !!!")
             Logging.debug(e)
             Logging.debug(response.content)
             r_json = {}
@@ -214,20 +219,20 @@ def upload_form(form):
             Logging.warning(r_json["msg"])
             return dict(error=dict(code=int(r_json["errcode"]), msg=r_json["msg"], data=r_json["data"]))
         else:
-            Logging.warn(u"表单上传出现未知错误: \n \t %s )" % (str(r_json)))
-            return dict(error=dict(code=-1, message=u"unknown error"))
+            Logging.warn("表单上传出现未知错误: \n \t %s )" % (str(r_json)))
+            return dict(error=dict(code=-1, message="unknown error"))
 
 
 # 登录
 def login():
     if isLogin():
-        Logging.success(u"已经登录啦")
+        Logging.success("已经登录啦")
     else:
-        Logging.info(u"未登录状态")
+        Logging.info("未登录状态")
         config_file = "account_info.ini"
         (account, password) = read_account_info_from_config_file(config_file)
         if not account:
-            sys.stdout.write(u"请输入登录账号: ")
+            sys.stdout.write("请输入登录账号: ")
             account = raw_input()
             password = getpass("请输入登录密码: ")
         form_data = build_form_data(account, password)
