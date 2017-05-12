@@ -7,10 +7,10 @@ from bs4 import BeautifulSoup
 from ConfigParser import ConfigParser
 from enum import Enum
 #
-# if sys.stdout.encoding != 'UTF-8':
-#     sys.stdout = codecs.getwriter('utf-8')(sys.stdout, 'strict')
-# if sys.stderr.encoding != 'UTF-8':
-#     sys.stderr = codecs.getwriter('utf-8')(sys.stderr, 'strict')
+if sys.stdout.encoding != 'UTF-8':
+    sys.stdout = codecs.getwriter('utf-8')(sys.stdout, 'strict')
+if sys.stderr.encoding != 'UTF-8':
+    sys.stderr = codecs.getwriter('utf-8')(sys.stderr, 'strict')
 
 class Logging:
     def __init__(self):

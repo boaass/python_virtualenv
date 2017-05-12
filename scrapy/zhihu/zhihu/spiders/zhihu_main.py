@@ -2,11 +2,13 @@
 import scrapy
 import cookielib
 import requests
+import sys, os
 
 from scrapy.selector import Selector
 from ..items import ZhihuItem
 from zhihu_login import Logging
 from zhihu import article
+from zhihu import Answer
 
 cookies = cookielib.LWPCookieJar('cookies')
 try:
@@ -25,7 +27,8 @@ class ZhihuMainSpider(scrapy.Spider):
         self.pase_column_count = 0
 
     def start_requests(self):
-        url = "https://www.zhihu.com/collection/43268381"
+        url = "https://www.zhihu.com/collection/25971719"
+        # url = "https://www.zhihu.com/collection/19763755"
         cookies_dict = requests.utils.dict_from_cookiejar(cookies)
         return [scrapy.Request(url, cookies=cookies_dict, meta={'cookies':cookies_dict}, callback=self.parse_page_number)]
 
@@ -37,7 +40,6 @@ class ZhihuMainSpider(scrapy.Spider):
         for url_extention in page_urls:
             page_count = max(page_count, int(url_extention.split('?page=')[-1]))
             url = ''.join((response.url, url_extention))
-            Logging.info(url)
         Logging.info('page_count: %d' % page_count)
 
         page_count = 1
@@ -61,17 +63,47 @@ class ZhihuMainSpider(scrapy.Spider):
 
     def parse_article(self, response):
         self.parse_article_count += 1
-        # Logging.info('======================%d' % self.parse_article_count)
-        # Logging.info(response.url)
+        Logging.info('======================%d' % self.parse_article_count)
+        Logging.info(response.url)
+
+        answer = Answer(response)
+
+        Logging.info('author: %s' % answer.author())
+        (contents, img_urls) = answer.content()
+        Logging.info(contents)
+
+        index = 0
+        for url in img_urls:
+            index += 1
+            Logging.info(url)
+
+            r = requests.get(url)
+            if not os.path.exists('pic'):
+                os.system('mkdir pic/')
+            file_name = 'pic/' + answer.author() + '%d' % index + '.png'
+            if r.status_code == 200:
+                with open(file_name, 'w+') as f:
+                    f.write(r.content)
+                    f.close()
+
         return
 
 
     def pase_column(self, response):
-        self.pase_column_count += 1
-        Logging.info('++++++++++++++++++++++%d' % self.pase_column_count)
-
-
-        Logging.info('author: %s' % article(response).author())
-        Logging.info('title: %s' % article(response).title())
+        # self.pase_column_count += 1
+        # Logging.info('++++++++++++++++++++++%d' % self.pase_column_count)
+        #
+        #
+        # Logging.info('author: %s' % article(response).author())
+        # Logging.info('title: %s' % article(response).title())
+        # (contents, img_urls) = article(response).content()
+        # Logging.info('contents: %s' % contents)
+        #
+        # for url in img_urls:
+        #     Logging.info('url: %s' % url)
+        #
+        # Logging.info('like_count: %s' % article(response).like_count())
+        # for topic in article(response).topics():
+        #     Logging.info('topic: %s' % topic)
 
         return
