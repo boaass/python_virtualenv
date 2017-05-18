@@ -42,7 +42,6 @@ class ZhihuMainSpider(scrapy.Spider):
             url = ''.join((response.url, url_extention))
         Logging.info('page_count: %d' % page_count)
 
-        page_count = 1
         for index in xrange(1, page_count+1):
             url = response.url + '?page=%d' % index
             yield scrapy.Request(url, cookies=response.meta['cookies'], meta=response.meta, callback=self.parse_request_url)
