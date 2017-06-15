@@ -5,6 +5,7 @@ import re
 
 data = ('123456789123456789L', '987654321987654321L', '66672L3567', '999999999L999999999L')
 
+
 def match_long_int_number(num):
     m = re.match(r'[-+]?\d+L$', num)
     if m is not None:
