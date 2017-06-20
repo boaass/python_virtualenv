@@ -10,4 +10,3 @@ with open('redata.txt', 'r') as f:
             print m.groups()
 
 f.close()
-
